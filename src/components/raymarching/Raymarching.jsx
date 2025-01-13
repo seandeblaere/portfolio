@@ -167,8 +167,6 @@ export function Raymarching({ setDPR }) {
     gl.setRenderTarget(renderTargetA);
     gl.render(magicScene, state.camera);
 
-    console.log(gl.getPixelRatio());
-
     upscalerMaterialRef.current.uniforms.uTexture.value = renderTargetA.texture;
     screenMesh.current.material = upscalerMaterialRef.current;
 
