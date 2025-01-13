@@ -55,6 +55,9 @@ export const SpaceScene = ({ enableEffects, position }) => {
   useFrame((state, delta) => {
     if (!meshRef.current) return;
 
+    const maxDelta = 0.1;
+    if (delta > maxDelta) delta = maxDelta;
+
     if (enableEffects) {
       if (!hasVelocityReachedMax.current) {
         velocityRef.current = Math.min(2, velocityRef.current + delta * 0.6);
