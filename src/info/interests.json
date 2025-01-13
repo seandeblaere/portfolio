@@ -1,0 +1,13 @@
+{
+  "name": "Orbiting My Passions",
+  "description": "From coding awesome apps to strumming along to my favorite tunes, I’m a guy of many passions! Whether it’s diving into epic board game adventures, discovering new places while traveling, or geeking out over The Lord of the Rings, I’m always up for some fun.",
+  "hoverDetails": {
+    "hobbies": [
+      "Programming cool projects",
+      "Jamming to music",
+      "Board game marathons",
+      "Traveling the world",
+      "The Lord of the Rings fandom"
+    ]
+  }
+}
