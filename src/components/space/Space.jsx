@@ -16,12 +16,12 @@ import skillsData from "/info/skills.json";
 import { Pointer } from "./Pointer";
 import { Planet } from "./Planet";
 
-const COUNT = 1000;
+const COUNT = 900;
 const XY_BOUNDS = 40;
 const Z_BOUNDS = 20;
-const MAX_SPEED_FACTOR = 2;
-const MAX_SCALE_FACTOR = 50;
-const CHROMATIC_ABBERATION_OFFSET = 0.008;
+const MAX_SPEED_FACTOR = 1.3;
+const MAX_SCALE_FACTOR = 35;
+const CHROMATIC_ABBERATION_OFFSET = 0.006;
 
 export const SpaceScene = ({ enableEffects, position }) => {
   const meshRef = useRef();
