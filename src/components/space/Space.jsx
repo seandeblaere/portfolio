@@ -21,9 +21,9 @@ const isMobile = window.innerWidth < 768;
 const COUNT = (isMobile ? 700 : 1000) * scalingFactor;
 const XY_BOUNDS = 40 * scalingFactor;
 const Z_BOUNDS = 20 * scalingFactor;
-const MAX_SPEED_FACTOR = 1.3;
-const MAX_SCALE_FACTOR = 35;
-const CHROMATIC_ABBERATION_OFFSET = isMobile ? 0.03 : 0.007;
+const MAX_SPEED_FACTOR = isMobile ? 0.95 : 1.3;
+const MAX_SCALE_FACTOR = isMobile ? 32 : 35;
+const CHROMATIC_ABBERATION_OFFSET = isMobile ? 0.02 : 0.007;
 
 export const SpaceScene = ({ enableEffects, position }) => {
   const meshRef = useRef();

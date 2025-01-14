@@ -128,8 +128,8 @@ export function Raymarching({ setDPR }) {
     );
 
     const startY = -6;
-    const endY = -0.2;
-    const startZ = 5;
+    const endY = isMobile ? 0 : -0.2;
+    const startZ = isMobile ? 5.9 : 5;
     const endZ = -2.5;
     const startOpacity = 1;
     const endOpacity = 0;
