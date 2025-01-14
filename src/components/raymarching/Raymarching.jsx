@@ -57,7 +57,7 @@ export function Raymarching({ setDPR }) {
 
   const fontProps = {
     font: "./Orbitron-Regular.ttf",
-    fontSize: 0.45 * scalingFactor,
+    fontSize: isMobile ? 0.6 * scalingFactor : 0.45 * scalingFactor,
     "material-toneMapped": false,
   };
 
