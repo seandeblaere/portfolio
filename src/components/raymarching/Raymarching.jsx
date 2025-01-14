@@ -49,9 +49,15 @@ export function Raymarching({ setDPR }) {
     window.innerHeight / resolution
   );
 
+  const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
+  const isMobile = window.innerWidth < 768;
+  const textContent = isMobile
+    ? "Scroll down to\nenter my universe"
+    : "Scroll down to enter my universe";
+
   const fontProps = {
     font: "./Orbitron-Regular.ttf",
-    fontSize: 0.45,
+    fontSize: 0.45 * scalingFactor,
     "material-toneMapped": false,
   };
 
@@ -77,19 +83,37 @@ export function Raymarching({ setDPR }) {
   };
 
   useEffect(() => {
+    let touchStartY = 0;
+
     const onWheel = (event) => {
       virtualScroll.current += event.deltaY * 0.001;
       virtualScroll.current = Math.max(0, Math.min(1, virtualScroll.current));
+    };
+
+    const onTouchStart = (event) => {
+      touchStartY = event.touches[0].clientY;
+    };
+
+    const onTouchMove = (event) => {
+      const touchEndY = event.touches[0].clientY;
+      const deltaY = touchStartY - touchEndY;
+      virtualScroll.current += deltaY * 0.001;
+      virtualScroll.current = Math.max(0, Math.min(1, virtualScroll.current));
+      touchStartY = touchEndY;
     };
 
     const disableScroll = (event) => event.preventDefault();
 
     window.addEventListener("wheel", onWheel);
     window.addEventListener("wheel", disableScroll, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: false });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("wheel", disableScroll);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
     };
   }, []);
 
@@ -242,8 +266,10 @@ export function Raymarching({ setDPR }) {
         anchorX="center"
         anchorY="middle"
         transparent
+        characters="abcdefghijklmnopqrstuvwxyz"
+        textAlign="center"
       >
-        Scroll down to enter my universe
+        {textContent}
       </Text>
     </>
   );

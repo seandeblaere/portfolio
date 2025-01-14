@@ -4,6 +4,9 @@ import * as THREE from "three";
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 
+const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
+const isMobile = window.innerWidth < 768;
+
 export function Planet({
   startingPosition,
   targetPosition = [0, 0, 0],
@@ -22,6 +25,7 @@ export function Planet({
   const [hovered, setHovered] = useState(false);
 
   useFrame((state, delta) => {
+    console.log(scalingFactor);
     delta = Math.min(0.1, delta);
     const planetPosition = api.current?.translation();
 
@@ -31,7 +35,7 @@ export function Planet({
         targetVec.y - planetPosition.y,
         targetVec.z - planetPosition.z
       );
-      api.current?.applyImpulse(vec.multiplyScalar(0.5));
+      api.current?.applyImpulse(vec.multiplyScalar(0.5 * scalingFactor));
     }
   });
 
@@ -44,11 +48,12 @@ export function Planet({
         position={pos}
         ref={api}
         colliders={false}
+        scale={scalingFactor}
       >
         <BallCollider args={[1.4]} />
         {children}
         <mesh
-          scale={1.45}
+          scale={1.45 * scalingFactor}
           visible={false}
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}

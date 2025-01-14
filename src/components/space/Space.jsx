@@ -16,9 +16,11 @@ import skillsData from "/info/skills.json";
 import { Pointer } from "./Pointer";
 import { Planet } from "./Planet";
 
-const COUNT = 900;
-const XY_BOUNDS = 40;
-const Z_BOUNDS = 20;
+const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
+const isMobile = window.innerWidth < 768;
+const COUNT = 1000 * scalingFactor;
+const XY_BOUNDS = 40 * scalingFactor;
+const Z_BOUNDS = 20 * scalingFactor;
 const MAX_SPEED_FACTOR = 1.3;
 const MAX_SCALE_FACTOR = 35;
 const CHROMATIC_ABBERATION_OFFSET = 0.006;
@@ -55,8 +57,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
   useFrame((state, delta) => {
     if (!meshRef.current) return;
 
-    const maxDelta = 0.1;
-    if (delta > maxDelta) delta = maxDelta;
+    delta = Math.min(0.1, delta);
 
     if (enableEffects) {
       if (!hasVelocityReachedMax.current) {
@@ -138,6 +139,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
         ref={meshRef}
         args={[undefined, undefined, COUNT]}
         matrixAutoUpdate
+        scale={scalingFactor}
       >
         <sphereGeometry args={[0.03]} />
         <meshBasicMaterial color={[1.5, 1.5, 1.5]} toneMapped={false} />
@@ -172,7 +174,11 @@ export const SpaceScene = ({ enableEffects, position }) => {
           <>
             <Planet
               startingPosition={[-20, 20, 20]}
-              targetPosition={[5.5, 2.3, -0.6]}
+              targetPosition={[
+                5.5 * scalingFactor,
+                2.3 * scalingFactor,
+                -0.6 * scalingFactor,
+              ]}
               data={{
                 title: aboutMeData.name,
                 content: aboutMeData.description,
@@ -182,7 +188,11 @@ export const SpaceScene = ({ enableEffects, position }) => {
             </Planet>
             <Planet
               startingPosition={[20, -20, -10]}
-              targetPosition={[-5, 1.2, -0.7]}
+              targetPosition={[
+                -5 * scalingFactor,
+                1.2 * scalingFactor,
+                -0.7 * scalingFactor,
+              ]}
               data={{
                 title: interestsData.name,
                 content: interestsData.description,
@@ -192,7 +202,11 @@ export const SpaceScene = ({ enableEffects, position }) => {
             </Planet>
             <Planet
               startingPosition={[20, 20, 20]}
-              targetPosition={[1, 0, -0.6]}
+              targetPosition={[
+                1 * scalingFactor,
+                0 * scalingFactor,
+                -0.6 * scalingFactor,
+              ]}
               data={{
                 title: skillsData.name,
                 content: skillsData.description,
@@ -203,7 +217,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
             </Planet>
             <Planet
               startingPosition={[-20, -20, -5]}
-              targetPosition={[-2, -3.2, -1.1]}
+              targetPosition={[-2, -3.2 * scalingFactor, -1.1 * scalingFactor]}
               data={{
                 title: contactData.name,
                 content: contactData.description,

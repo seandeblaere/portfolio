@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { v4 as uuidv4 } from "uuid";
 
 const passFragmentShader = `
-// Based on https://www.shadertoy.com/view/ltKBDd by battlebottle
 
 uniform sampler2D uTexture;
 uniform bool uUpscaling;
