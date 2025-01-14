@@ -18,12 +18,12 @@ import { Planet } from "./Planet";
 
 const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
 const isMobile = window.innerWidth < 768;
-const COUNT = 1000 * scalingFactor;
+const COUNT = (isMobile ? 700 : 1000) * scalingFactor;
 const XY_BOUNDS = 40 * scalingFactor;
 const Z_BOUNDS = 20 * scalingFactor;
 const MAX_SPEED_FACTOR = 1.3;
 const MAX_SCALE_FACTOR = 35;
-const CHROMATIC_ABBERATION_OFFSET = 0.006;
+const CHROMATIC_ABBERATION_OFFSET = isMobile ? 0.03 : 0.007;
 
 export const SpaceScene = ({ enableEffects, position }) => {
   const meshRef = useRef();

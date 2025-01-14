@@ -35,7 +35,9 @@ export function Planet({
         targetVec.y - planetPosition.y,
         targetVec.z - planetPosition.z
       );
-      api.current?.applyImpulse(vec.multiplyScalar(0.5 * scalingFactor));
+      api.current?.applyImpulse(
+        vec.multiplyScalar((isMobile ? 0.1 : 0.5) * scalingFactor)
+      );
     }
   });
 

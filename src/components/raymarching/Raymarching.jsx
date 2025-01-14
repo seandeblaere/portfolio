@@ -52,7 +52,7 @@ export function Raymarching({ setDPR }) {
   const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
   const isMobile = window.innerWidth < 768;
   const textContent = isMobile
-    ? "Scroll down to\nenter my universe"
+    ? "Scroll down\nto enter my universe"
     : "Scroll down to enter my universe";
 
   const fontProps = {
