@@ -169,7 +169,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
       />
 
       <Physics gravity={[0, 0, 0]}>
-        <Pointer visible={isVisible} />
+        <Pointer visible={isVisible && !isMobile} />
         {isVisible && (
           <>
             <Planet
