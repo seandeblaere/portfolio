@@ -20,9 +20,9 @@ import fragmentShader from "../clouds/fragmentShader.glsl";
 extend({ BicubicUpscaleMaterial });
 
 const BLUE_NOISE_TEXTURE_URL =
-  "https://cdn.maximeheckel.com/noises/blue-noise.png";
+  "../assets/blue-noise.png";
 
-const NOISE_TEXTURE_URL = "https://cdn.maximeheckel.com/noises/noise2.png";
+const NOISE_TEXTURE_URL = "../assets/noise2.png";
 
 export function Raymarching({ setDPR }) {
   const [enableEffects, setEnableEffects] = useState(false);
@@ -83,6 +83,20 @@ export function Raymarching({ setDPR }) {
   };
 
   useEffect(() => {
+    const preventPullToRefresh = (e) => {
+      e.preventDefault();
+    };
+
+    document.body.addEventListener('touchstart', preventPullToRefresh, { passive: false });
+    document.body.addEventListener('touchmove', preventPullToRefresh, { passive: false });
+    
+    return () => {
+      document.body.removeEventListener('touchstart', preventPullToRefresh);
+      document.body.removeEventListener('touchmove', preventPullToRefresh);
+    };
+  }, []);
+
+  useEffect(() => {
     let touchStartY = 0;
 
     const onWheel = (event) => {
@@ -95,10 +109,14 @@ export function Raymarching({ setDPR }) {
     };
 
     const onTouchMove = (event) => {
+      event.preventDefault();
+      
       const touchEndY = event.touches[0].clientY;
       const deltaY = touchStartY - touchEndY;
-      virtualScroll.current += deltaY * 0.001;
+      
+      virtualScroll.current += deltaY * 0.002;
       virtualScroll.current = Math.max(0, Math.min(1, virtualScroll.current));
+      
       touchStartY = touchEndY;
     };
 

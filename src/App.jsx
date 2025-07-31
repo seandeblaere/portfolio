@@ -1,16 +1,36 @@
-import { AdaptiveEvents, AdaptiveDpr, Bvh, Loader } from "@react-three/drei";
+import { AdaptiveEvents, AdaptiveDpr, Bvh, Loader, PerformanceMonitor, Stats } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useState } from "react";
+import { Perf } from "r3f-perf";
+
 
 import { Raymarching } from "./components/raymarching/Raymarching";
 
 const Scene = () => {
   const [DPR, setDPR] = useState(1);
+  const [factor, setFactor] = useState(1);
   return (
     <>
-      <Canvas camera={{ position: [0, 0, 6], near: 0.1, far: 100 }} dpr={DPR}>
+      <Canvas camera={{ position: [0, 0, 6], near: 0.1, far: 100 }} dpr={DPR} gl={{ antialias: true }}>
         <AdaptiveEvents />
         <AdaptiveDpr pixelated />
+        <Perf position="top-left" />
+        <PerformanceMonitor
+        factor={factor}
+        bounds={(refreshrate) => (refreshrate > 90 ? [45, 80] : [45, 55])}
+        onIncline={() => {
+          setDPR(Math.min(DPR + 0.3, 2));
+        }}
+        onDecline={() => {
+          setDPR(Math.max(DPR - 0.3, 0.5));
+        }}
+        onChange={({ factor }) => {
+          setFactor(factor);
+          setDPR(Math.floor(0.5 + 1.5 * factor));
+        }}
+        flipflops={2}
+        onFallback={() => setDPR(0.5)}
+      />
         <Bvh />
         <Suspense fallback={null}>
           <Raymarching setDPR={setDPR} />

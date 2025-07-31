@@ -141,7 +141,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
         matrixAutoUpdate
         scale={scalingFactor}
       >
-        <sphereGeometry args={[0.03]} />
+        <sphereGeometry args={[0.03, 4, 4]} />
         <meshBasicMaterial color={[1.5, 1.5, 1.5]} toneMapped={false} />
       </instancedMesh>
       {enableEffects && (

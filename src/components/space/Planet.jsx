@@ -25,7 +25,6 @@ export function Planet({
   const [hovered, setHovered] = useState(false);
 
   useFrame((state, delta) => {
-    console.log(scalingFactor);
     delta = Math.min(0.1, delta);
     const planetPosition = api.current?.translation();
 
