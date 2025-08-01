@@ -54,3 +54,49 @@ canvas {
 .overlay a {
   cursor: pointer;
 }
+
+@media (max-width: 768px) {
+  .overlay {
+    left: 1rem;
+    bottom: 0.5rem;
+    gap: 1rem;
+  }
+
+  .overlay a img {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+}
+
+.mobile-controls {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 10px 20px;
+  border-radius: 30px;
+  backdrop-filter: blur(10px);
+}
+
+.mobile-controls button {
+  pointer-events: auto;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: white;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  canvas {
+    cursor: auto;
+  }
+}

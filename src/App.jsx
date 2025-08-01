@@ -2,8 +2,6 @@ import { AdaptiveEvents, AdaptiveDpr, Bvh, Loader, PerformanceMonitor, Stats } f
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useState } from "react";
 import { Perf } from "r3f-perf";
-
-
 import { Raymarching } from "./components/raymarching/Raymarching";
 
 const Scene = () => {
@@ -14,7 +12,7 @@ const Scene = () => {
       <Canvas camera={{ position: [0, 0, 6], near: 0.1, far: 100 }} dpr={DPR} gl={{ antialias: true }}>
         <AdaptiveEvents />
         <AdaptiveDpr pixelated />
-        <Perf position="top-left" />
+        {/* <Perf position="top-left" /> */}
         <PerformanceMonitor
         factor={factor}
         bounds={(refreshrate) => (refreshrate > 90 ? [45, 80] : [45, 55])}

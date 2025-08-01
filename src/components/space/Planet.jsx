@@ -35,7 +35,7 @@ export function Planet({
         targetVec.z - planetPosition.z
       );
       api.current?.applyImpulse(
-        vec.multiplyScalar((isMobile ? 0.1 : 0.5) * scalingFactor)
+        vec.multiplyScalar((isMobile ? 0.2 : 0.5) * scalingFactor)
       );
     }
   });
@@ -50,6 +50,7 @@ export function Planet({
         ref={api}
         colliders={false}
         scale={scalingFactor}
+        canSleep={false}
       >
         <BallCollider args={[1.4]} />
         {children}
