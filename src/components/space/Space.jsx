@@ -15,25 +15,31 @@ import contactData from "/info/contact.json";
 import skillsData from "/info/skills.json";
 import { Pointer } from "./Pointer";
 import { Planet } from "./Planet";
-import { Arrow } from "../Arrow";
-
-const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
-const isMobile = window.innerWidth < 768;
-const COUNT = (isMobile ? 700 : 1000) * scalingFactor;
-const XY_BOUNDS = 40 * scalingFactor;
-const Z_BOUNDS = 20 * scalingFactor;
-const MAX_SPEED_FACTOR = isMobile ? 0.95 : 1.3;
-const MAX_SCALE_FACTOR = isMobile ? 32 : 35;
-const CHROMATIC_ABBERATION_OFFSET = isMobile ? 0.02 : 0.007;
-
-const planetMobileTargetPositions = [
-  [0, -0.5, 3],
-  [2, 1.2, -1.5],
-  [0, 4, -5],
-  [-2, 1.2, -1.5],
-];
+import { useMobileContext } from "../../context/MobileContext.jsx";
 
 export const SpaceScene = ({ enableEffects, position }) => {
+  const {
+    isMobile,
+    activePlanetIndex,
+    setShowMobileControls,
+    showMobileControls,
+  } = useMobileContext();
+
+  const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
+  const COUNT = (isMobile ? 700 : 1000) * scalingFactor;
+  const XY_BOUNDS = 40 * scalingFactor;
+  const Z_BOUNDS = 20 * scalingFactor;
+  const MAX_SPEED_FACTOR = isMobile ? 0.95 : 1.3;
+  const MAX_SCALE_FACTOR = isMobile ? 32 : 35;
+  const CHROMATIC_ABBERATION_OFFSET = isMobile ? 0.02 : 0.007;
+
+  const planetMobileTargetPositions = [
+    [0, -0.5, 3],
+    [2, 1.2, -1.5],
+    [0, 4, -5],
+    [-2, 1.2, -1.5],
+  ];
+
   const meshRef = useRef();
   const effectsRef = useRef();
 
@@ -43,22 +49,11 @@ export const SpaceScene = ({ enableEffects, position }) => {
   const isVisibleRef = useRef(false);
   const [isVisible, setIsVisible] = useState(false);
 
-  const [activePlanet, setActivePlanet] = useState(0);
-
-  const nextPlanet = () => {
-    console.log("nextPlanet");
-    setActivePlanet((prevIndex) => (prevIndex + 1) > planetMobileTargetPositions.length ? 0 : prevIndex + 1);
-  }
-
-  const previousPlanet = () => {
-    console.log("previousPlanet");
-    setActivePlanet((prevIndex) => (prevIndex - 1) < 0 ? planetMobileTargetPositions.length - 1 : prevIndex - 1);
-  }
-
   const getTargetPosition = (planetIndex) => {
-    console.log("getting target position", (planetIndex + activePlanet) % planetMobileTargetPositions.length);
-    return planetMobileTargetPositions[(planetIndex + activePlanet) % planetMobileTargetPositions.length];
-  }
+    return planetMobileTargetPositions[
+      (planetIndex + activePlanetIndex) % planetMobileTargetPositions.length
+    ];
+  };
 
   useEffect(() => {
     if (!meshRef.current || !position) return;
@@ -66,8 +61,8 @@ export const SpaceScene = ({ enableEffects, position }) => {
     const t = new THREE.Object3D();
     let j = 0;
     for (let i = 0; i < COUNT * 3; i += 3) {
-      t.position.x = generatePos();
-      t.position.y = generatePos();
+      t.position.x = generatePos(XY_BOUNDS);
+      t.position.y = generatePos(XY_BOUNDS);
       t.position.z = (Math.random() - 0.5) * Z_BOUNDS;
       t.updateMatrix();
       meshRef.current.setMatrixAt(j++, t.matrix);
@@ -154,6 +149,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
 
     if (isVisibleRef.current !== isVisible) {
       setIsVisible(isVisibleRef.current);
+      setShowMobileControls(isVisibleRef.current);
     }
   });
 
@@ -194,71 +190,73 @@ export const SpaceScene = ({ enableEffects, position }) => {
       />
 
       <Physics gravity={[0, 0, 0]}>
-        <Pointer visible={isVisible && !isMobile} />
-        {isVisible && (
-          <>
-            <Planet
-              startingPosition={[-20, 20, 20]}
-              targetPosition={isMobile ? getTargetPosition(0) : [
-                5.5 * scalingFactor,
-                2.3 * scalingFactor,
-                -0.6 * scalingFactor,
-              ]}
-              data={{
-                title: aboutMeData.name,
-                content: aboutMeData.description,
-              }}
-            >
-              <Planet1 />
-            </Planet>
-            <Planet
-              startingPosition={[20, -20, -10]}
-              targetPosition={isMobile ? getTargetPosition(1) : [
-                -5 * scalingFactor,
-                1.2 * scalingFactor,
-                -0.7 * scalingFactor,
-              ]}
-              data={{
-                title: interestsData.name,
-                content: interestsData.description,
-              }}
-            >
-              <Planet2 />
-            </Planet>
-            <Planet
-              startingPosition={[20, 20, 20]}
-              targetPosition={isMobile ? getTargetPosition(2) : [
-                1 * scalingFactor,
-                0 * scalingFactor,
-                -0.6 * scalingFactor,
-              ]}
-              data={{
-                title: skillsData.name,
-                content: skillsData.description,
-                list: skillsData.skills,
-              }}
-            >
-              <Planet3 />
-            </Planet>
-            <Planet
-              startingPosition={[-20, -20, -5]}
-              targetPosition={isMobile ? getTargetPosition(3) : [-2, -3.2 * scalingFactor, -1.1 * scalingFactor]}
-              data={{
-                title: contactData.name,
-                content: contactData.description,
-              }}
-            >
-              <Planet4 />
-            </Planet>
-          </>
-        )}
+        <Pointer visible={isVisible} />
+        <Planet
+          startingPosition={[-20, 20, 20]}
+          targetPosition={
+            isMobile
+              ? getTargetPosition(0)
+              : [5.5 * scalingFactor, 2.3 * scalingFactor, -0.6 * scalingFactor]
+          }
+          data={{
+            title: aboutMeData.name,
+            content: aboutMeData.description,
+          }}
+          activated={isVisible}
+        >
+          <Planet1 />
+        </Planet>
+        <Planet
+          startingPosition={[20, -20, -10]}
+          targetPosition={
+            isMobile
+              ? getTargetPosition(1)
+              : [-5 * scalingFactor, 1.2 * scalingFactor, -0.7 * scalingFactor]
+          }
+          data={{
+            title: interestsData.name,
+            content: interestsData.description,
+          }}
+          activated={isVisible}
+        >
+          <Planet2 />
+        </Planet>
+        <Planet
+          startingPosition={[20, 20, 20]}
+          targetPosition={
+            isMobile
+              ? getTargetPosition(2)
+              : [1 * scalingFactor, 0 * scalingFactor, -0.6 * scalingFactor]
+          }
+          data={{
+            title: skillsData.name,
+            content: skillsData.description,
+            list: skillsData.skills,
+          }}
+          activated={isVisible}
+        >
+          <Planet3 />
+        </Planet>
+        <Planet
+          startingPosition={[-20, -20, -5]}
+          targetPosition={
+            isMobile
+              ? getTargetPosition(3)
+              : [-2, -3.2 * scalingFactor, -1.1 * scalingFactor]
+          }
+          data={{
+            title: contactData.name,
+            content: contactData.description,
+          }}
+          activated={isVisible}
+        >
+          <Planet4 />
+        </Planet>
       </Physics>
-      <Arrow onClick={previousPlanet} position={[-0.1, -0.25, 5.5]} rotation={[-Math.PI / 2, Math.PI / 2, 0]} scale={[0.1, 0.1, 0.1]} />
-      <Arrow onClick={nextPlanet} position={[0.1, -0.25, 5.5]} rotation={[-Math.PI / 2, -Math.PI / 2, 0]} scale={[0.1, 0.1, 0.1]} />
     </>
   );
 };
 
-function generatePos() {
+function generatePos(XY_BOUNDS) {
   return (Math.random() - 0.5) * XY_BOUNDS;
 }

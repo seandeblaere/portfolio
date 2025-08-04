@@ -11,6 +11,7 @@ import * as THREE from "three";
 import { v4 as uuidv4 } from "uuid";
 import { easing } from "maath";
 import { SpaceScene } from "../space/Space.jsx";
+import { useMobileContext } from "../../context/MobileContext.jsx";
 
 import BicubicUpscaleMaterial from "../clouds/BicubicUpscaleMaterial";
 import getFullscreenTriangle from "../../utils.jsx";
@@ -19,12 +20,11 @@ import fragmentShader from "../clouds/fragmentShader.glsl";
 
 extend({ BicubicUpscaleMaterial });
 
-const BLUE_NOISE_TEXTURE_URL =
-  "../assets/blue-noise.png";
-
+const BLUE_NOISE_TEXTURE_URL = "../assets/blue-noise.png";
 const NOISE_TEXTURE_URL = "../assets/noise2.png";
 
 export function Raymarching({ setDPR }) {
+  const { isMobile } = useMobileContext();
   const [enableEffects, setEnableEffects] = useState(false);
   const [position, setPosition] = useState(false);
   const mesh = useRef();
@@ -50,7 +50,6 @@ export function Raymarching({ setDPR }) {
   );
 
   const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
-  const isMobile = window.innerWidth < 768;
   const textContent = isMobile
     ? "Scroll down\nto enter my universe"
     : "Scroll down to enter my universe";
@@ -87,12 +86,16 @@ export function Raymarching({ setDPR }) {
       e.preventDefault();
     };
 
-    document.body.addEventListener('touchstart', preventPullToRefresh, { passive: false });
-    document.body.addEventListener('touchmove', preventPullToRefresh, { passive: false });
-    
+    document.body.addEventListener("touchstart", preventPullToRefresh, {
+      passive: false,
+    });
+    document.body.addEventListener("touchmove", preventPullToRefresh, {
+      passive: false,
+    });
+
     return () => {
-      document.body.removeEventListener('touchstart', preventPullToRefresh);
-      document.body.removeEventListener('touchmove', preventPullToRefresh);
+      document.body.removeEventListener("touchstart", preventPullToRefresh);
+      document.body.removeEventListener("touchmove", preventPullToRefresh);
     };
   }, []);
 
@@ -110,13 +113,13 @@ export function Raymarching({ setDPR }) {
 
     const onTouchMove = (event) => {
       event.preventDefault();
-      
+
       const touchEndY = event.touches[0].clientY;
       const deltaY = touchStartY - touchEndY;
-      
+
       virtualScroll.current += deltaY * 0.002;
       virtualScroll.current = Math.max(0, Math.min(1, virtualScroll.current));
-      
+
       touchStartY = touchEndY;
     };
 

@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import { BallCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { Html } from "@react-three/drei";
@@ -14,8 +14,10 @@ export function Planet({
   r = THREE.MathUtils.randFloatSpread,
   children,
   data,
+  activated
 }) {
   const api = useRef();
+  const [initialized, setInitialized] = useState(false);
   const pos = useMemo(() => startingPosition || [r(40), r(40), r(40)], []);
   const targetVec = useMemo(
     () => new THREE.Vector3(...targetPosition),
@@ -23,20 +25,53 @@ export function Planet({
   );
 
   const [hovered, setHovered] = useState(false);
+  const resetPosition = useRef(false);
+
+  useEffect(() => {
+    if (activated && !initialized) {
+      setInitialized(true);
+    } else if (!activated && initialized) {
+      resetPosition.current = true;
+      setInitialized(false);
+    }
+  }, [activated, initialized]);
 
   useFrame((state, delta) => {
+    if (!api.current) return;
     delta = Math.min(0.1, delta);
-    const planetPosition = api.current?.translation();
-
+    const planetPosition = api.current.translation();
+    
     if (planetPosition) {
-      vec.set(
-        targetVec.x - planetPosition.x,
-        targetVec.y - planetPosition.y,
-        targetVec.z - planetPosition.z
-      );
-      api.current?.applyImpulse(
-        vec.multiplyScalar((isMobile ? 0.2 : 0.5) * scalingFactor)
-      );
+      if (activated && initialized) {
+        vec.set(
+          targetVec.x - planetPosition.x,
+          targetVec.y - planetPosition.y,
+          targetVec.z - planetPosition.z
+        );
+        api.current.applyImpulse(
+          vec.multiplyScalar((isMobile ? 0.1 : 0.5) * scalingFactor)
+        );
+      } else if (resetPosition.current) {
+        const startVec = new THREE.Vector3(
+          startingPosition[0],
+          startingPosition[1],
+          startingPosition[2]
+        );
+        
+        vec.set(
+          startVec.x - planetPosition.x,
+          startVec.y - planetPosition.y,
+          startVec.z - planetPosition.z
+        );
+        
+        api.current.applyImpulse(
+          vec.multiplyScalar((isMobile ? 0.15 : 0.6) * scalingFactor)
+        );
+        
+        if (vec.length() < 1) {
+          resetPosition.current = false;
+        }
+      }
     }
   });
 
