@@ -52,10 +52,10 @@ const Scene = () => {
       <MobileControls />
       <div className="overlay">
         <a href="https://github.com/seandeblaere" target="_blank">
-          <img src="/github.svg" alt="GitHub" width={64} height={64} />
+          <img src="/github.svg" alt="GitHub" width={32} height={32} />
         </a>
         <a href="mailto:seandebl@student.arteveldehs.be">
-          <img src="/email.svg" alt="Email" width={64} height={64} />
+          <img src="/email.svg" alt="Email" width={32} height={32} />
         </a>
       </div>
     </MobileProvider>
