@@ -5,12 +5,20 @@ export const MobileControls = () => {
 
   return showMobileControls ? (
     <div className="mobile-controls">
-      <button className="mobile-control-button" onClick={previousPlanet}>
-        Previous
-      </button>
-      <button className="mobile-control-button" onClick={nextPlanet}>
-        Next
-      </button>
+      <img
+        src="../../assets/arrow_left.svg"
+        alt="Previous"
+        width={48}
+        height={48}
+        onClick={previousPlanet}
+      />
+      <img
+        src="../../assets/arrow_right.svg"
+        alt="Next"
+        width={48}
+        height={48}
+        onClick={nextPlanet}
+      />
     </div>
   ) : null;
 };

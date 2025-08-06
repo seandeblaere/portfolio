@@ -10,6 +10,7 @@ import { Suspense, useState } from "react";
 import { Raymarching } from "./components/raymarching/Raymarching";
 import { MobileProvider } from "./context/MobileContext";
 import { MobileControls } from "./components/controls/MobileControls";
+import { Perf } from "r3f-perf";
 
 const Scene = () => {
   const [DPR, setDPR] = useState(1);
@@ -24,6 +25,7 @@ const Scene = () => {
       >
         <AdaptiveEvents />
         <AdaptiveDpr pixelated />
+        {/* <Perf position="top-left" /> */}
         <PerformanceMonitor
           factor={factor}
           bounds={(refreshrate) => (refreshrate > 90 ? [45, 80] : [45, 55])}
@@ -42,7 +44,7 @@ const Scene = () => {
         />
         <Bvh />
         <Suspense fallback={null}>
-          <Raymarching setDPR={setDPR} />
+          <Raymarching DPR={DPR} setDPR={setDPR} />
         </Suspense>
       </Canvas>
       <Loader />

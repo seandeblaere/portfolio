@@ -23,7 +23,7 @@ extend({ BicubicUpscaleMaterial });
 const BLUE_NOISE_TEXTURE_URL = "../assets/blue-noise.png";
 const NOISE_TEXTURE_URL = "../assets/noise2.png";
 
-export function Raymarching({ setDPR }) {
+export function Raymarching({ DPR, setDPR }) {
   const { isMobile } = useMobileContext();
   const [enableEffects, setEnableEffects] = useState(false);
   const [position, setPosition] = useState(false);
@@ -36,13 +36,14 @@ export function Raymarching({ setDPR }) {
   const { viewport } = useThree();
   const portalMaterial = useRef();
   const portalMesh = useRef();
+  const lastDpr = useRef(DPR);
 
   const virtualScroll = useRef(0);
   const currentScroll = useRef(0);
   const isVisible = useRef(true);
   const magicScene = new THREE.Scene();
 
-  const resolution = 5;
+  const resolution = isMobile ? 3 : 5;
 
   const renderTargetA = useFBO(
     window.innerWidth / resolution,
@@ -79,6 +80,7 @@ export function Raymarching({ setDPR }) {
     uBlueNoise: new THREE.Uniform(null),
     uFrame: new THREE.Uniform(0),
     uCameraPosition: new THREE.Uniform(new THREE.Vector3(0.0, 0.5, 5.5)),
+    uCurrentScroll: new THREE.Uniform(0),
   };
 
   useEffect(() => {
@@ -150,7 +152,7 @@ export function Raymarching({ setDPR }) {
 
     const startY = -6;
     const endY = isMobile ? 0 : -0.2;
-    const startZ = isMobile ? 5.9 : 5;
+    const startZ = isMobile ? 6.2 : 5.3;
     const endZ = -2.5;
     const startOpacity = 1;
     const endOpacity = 0;
@@ -178,7 +180,7 @@ export function Raymarching({ setDPR }) {
 
     if (currentScroll.current > 0.75) {
       setPosition(true);
-      setDPR(0.7);
+      setDPR(0.8);
     } else {
       setPosition(false);
       setDPR(1);
@@ -208,7 +210,7 @@ export function Raymarching({ setDPR }) {
       yPosition,
       zPosition
     );
-
+    mesh.current.material.uniforms.uCurrentScroll.value = currentScroll.current;
     gl.setRenderTarget(renderTargetA);
     gl.render(magicScene, state.camera);
 
@@ -229,6 +231,11 @@ export function Raymarching({ setDPR }) {
     if (portalMaterial.current) {
       easing.damp(portalMaterial.current, "blend", blendFactor, 0.01, delta);
     }
+
+    if (DPR !== lastDpr.current && upscalerMaterialRef.current) {
+      upscalerMaterialRef.current.updateDPR(DPR);
+      lastDpr.current = DPR;
+    }
   });
 
   return (
@@ -246,6 +253,8 @@ export function Raymarching({ setDPR }) {
             vertexShader={vertexShader}
             uniforms={uniforms}
             wireframe={false}
+            transparent
+            depthWrite={false}
           />
         </mesh>,
         magicScene
@@ -259,6 +268,7 @@ export function Raymarching({ setDPR }) {
         ref={upscalerMaterialRef}
         key={uuidv4()}
         visible={isVisible.current}
+        args={[DPR]}
       />
       <mesh
         ref={screenMesh}

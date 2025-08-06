@@ -14,7 +14,7 @@ export function Planet({
   r = THREE.MathUtils.randFloatSpread,
   children,
   data,
-  activated
+  activated,
 }) {
   const api = useRef();
   const [initialized, setInitialized] = useState(false);
@@ -40,7 +40,7 @@ export function Planet({
     if (!api.current) return;
     delta = Math.min(0.1, delta);
     const planetPosition = api.current.translation();
-    
+
     if (planetPosition) {
       if (activated && initialized) {
         vec.set(
@@ -49,7 +49,7 @@ export function Planet({
           targetVec.z - planetPosition.z
         );
         api.current.applyImpulse(
-          vec.multiplyScalar((isMobile ? 0.1 : 0.5) * scalingFactor)
+          vec.multiplyScalar((isMobile ? 0.2 : 0.5) * scalingFactor)
         );
       } else if (resetPosition.current) {
         const startVec = new THREE.Vector3(
@@ -57,17 +57,17 @@ export function Planet({
           startingPosition[1],
           startingPosition[2]
         );
-        
+
         vec.set(
           startVec.x - planetPosition.x,
           startVec.y - planetPosition.y,
           startVec.z - planetPosition.z
         );
-        
+
         api.current.applyImpulse(
           vec.multiplyScalar((isMobile ? 0.15 : 0.6) * scalingFactor)
         );
-        
+
         if (vec.length() < 1) {
           resetPosition.current = false;
         }

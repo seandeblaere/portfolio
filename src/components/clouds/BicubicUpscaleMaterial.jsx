@@ -109,10 +109,8 @@ void main() {
 }
 `;
 
-const DPR = 2;
-
 class BicubicUpscaleMaterial extends THREE.ShaderMaterial {
-  constructor() {
+  constructor(dpr = 1) {
     super({
       uniforms: {
         uTexture: {
@@ -122,7 +120,7 @@ class BicubicUpscaleMaterial extends THREE.ShaderMaterial {
           value: new THREE.Vector2(
             window.innerWidth,
             window.innerHeight
-          ).multiplyScalar(DPR),
+          ).multiplyScalar(dpr),
         },
       },
       vertexShader: passVertexSHader,
@@ -131,6 +129,16 @@ class BicubicUpscaleMaterial extends THREE.ShaderMaterial {
       depthWrite: false,
       depthTest: false,
     });
+
+    this.dpr = dpr;
+  }
+
+  updateDPR(dpr) {
+    this.dpr = dpr;
+    this.uniforms.uResolution.value = new THREE.Vector2(
+      window.innerWidth,
+      window.innerHeight
+    ).multiplyScalar(dpr);
   }
 }
 

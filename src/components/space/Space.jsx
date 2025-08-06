@@ -18,12 +18,8 @@ import { Planet } from "./Planet";
 import { useMobileContext } from "../../context/MobileContext.jsx";
 
 export const SpaceScene = ({ enableEffects, position }) => {
-  const {
-    isMobile,
-    activePlanetIndex,
-    setShowMobileControls,
-    showMobileControls,
-  } = useMobileContext();
+  const { isMobile, activePlanetIndex, setShowMobileControls } =
+    useMobileContext();
 
   const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
   const COUNT = (isMobile ? 700 : 1000) * scalingFactor;
@@ -35,9 +31,9 @@ export const SpaceScene = ({ enableEffects, position }) => {
 
   const planetMobileTargetPositions = [
     [0, -0.5, 3],
-    [2, 1.2, -1.5],
-    [0, 4, -5],
-    [-2, 1.2, -1.5],
+    [2, 1.5, -1.5],
+    [1, 4, -2],
+    [-1.5, 2, 0.5],
   ];
 
   const meshRef = useRef();
@@ -149,7 +145,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
 
     if (isVisibleRef.current !== isVisible) {
       setIsVisible(isVisibleRef.current);
-      setShowMobileControls(isVisibleRef.current);
+      setShowMobileControls(isVisibleRef.current && isMobile);
     }
   });
 
