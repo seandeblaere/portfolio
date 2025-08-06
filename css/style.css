@@ -41,14 +41,17 @@ canvas {
   width: 100vw;
   height: 100vh;
   cursor: none;
+  z-index: 1;
 }
 
 .overlay {
-  position: fixed;
+  position: absolute;
   bottom: 1rem;
   left: 4rem;
   display: flex;
   gap: 1.5rem;
+  z-index: 1000;
+  pointer-events: auto;
 }
 
 .overlay a {
@@ -63,8 +66,8 @@ canvas {
   }
 
   .overlay a img {
-    width: 1.7rem;
-    height: 1.7rem;
+    width: 32px;
+    height: 32px;
   }
 }
 

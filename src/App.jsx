@@ -4,6 +4,7 @@ import {
   AdaptiveEvents,
   AdaptiveDpr,
   PerformanceMonitor,
+  Html,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useState } from "react";
@@ -23,7 +24,7 @@ const Scene = () => {
         dpr={DPR}
         gl={{ antialias: true }}
       >
-        <AdaptiveEvents />
+        {/* <AdaptiveEvents /> */}
         <AdaptiveDpr pixelated />
         {/* <Perf position="top-left" /> */}
         <PerformanceMonitor
@@ -48,15 +49,15 @@ const Scene = () => {
         </Suspense>
       </Canvas>
       <Loader />
+      <MobileControls />
       <div className="overlay">
         <a href="https://github.com/seandeblaere" target="_blank">
-          <img src="/github.svg" alt="GitHub" width={32} height={32} />
+          <img src="/github.svg" alt="GitHub" width={64} height={64} />
         </a>
         <a href="mailto:seandebl@student.arteveldehs.be">
-          <img src="/email.svg" alt="Email" width={32} height={32} />
+          <img src="/email.svg" alt="Email" width={64} height={64} />
         </a>
       </div>
-      <MobileControls />
     </MobileProvider>
   );
 };

@@ -10,14 +10,14 @@ export const MobileControls = () => {
         alt="Previous"
         width={48}
         height={48}
-        onClick={previousPlanet}
+        onPointerDown={previousPlanet}
       />
       <img
         src="../../assets/arrow_right.svg"
         alt="Next"
         width={48}
         height={48}
-        onClick={nextPlanet}
+        onPointerDown={nextPlanet}
       />
     </div>
   ) : null;
