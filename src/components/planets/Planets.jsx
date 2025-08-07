@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import * as THREE from "three";
+import { animatePlanet } from "../../utils.jsx";
 
 export function Planet1(props) {
   const { nodes, materials } = useGLTF("./assets/lava_planet.glb");
@@ -9,19 +9,7 @@ export function Planet1(props) {
   const [hovered, setHovered] = useState(false);
 
   useFrame((state, delta) => {
-    if (!planet.current) return;
-
-    planet.current.rotation.x -= delta * 0.01;
-    planet.current.rotation.y -= delta * 0.1;
-
-    planet.current.scale.lerp(
-      new THREE.Vector3(
-        hovered ? 2 : 1.4,
-        hovered ? 2 : 1.4,
-        hovered ? 2 : 1.4
-      ),
-      0.1
-    );
+    animatePlanet(planet, delta, hovered, 2, 1.4);
   });
 
   return (
@@ -53,19 +41,7 @@ export function Planet2(props) {
   const [hovered, setHovered] = useState(false);
 
   useFrame((state, delta) => {
-    if (!planet.current) return;
-
-    planet.current.rotation.x += delta * 0.01;
-    planet.current.rotation.y -= delta * 0.1;
-
-    planet.current.scale.lerp(
-      new THREE.Vector3(
-        hovered ? 1.2 : 0.9,
-        hovered ? 1.2 : 0.9,
-        hovered ? 1.2 : 0.9
-      ),
-      0.1
-    );
+    animatePlanet(planet, delta, hovered, 1.2, 0.9);
   });
 
   return (
@@ -105,19 +81,7 @@ export function Planet3(props) {
   const [hovered, setHovered] = useState(false);
 
   useFrame((state, delta) => {
-    if (!planet.current) return;
-
-    planet.current.rotation.x -= delta * 0.01;
-    planet.current.rotation.y += delta * 0.1;
-
-    planet.current.scale.lerp(
-      new THREE.Vector3(
-        hovered ? 5 : 3.5,
-        hovered ? 5 : 3.5,
-        hovered ? 5 : 3.5
-      ),
-      0.1
-    );
+    animatePlanet(planet, delta, hovered, 5, 3.5);
   });
 
   return (
@@ -151,19 +115,7 @@ export function Planet4(props) {
   const [hovered, setHovered] = useState(false);
 
   useFrame((state, delta) => {
-    if (!planet.current) return;
-
-    planet.current.rotation.x += delta * 0.01;
-    planet.current.rotation.y += delta * 0.1;
-
-    planet.current.scale.lerp(
-      new THREE.Vector3(
-        hovered ? 2 : 1.4,
-        hovered ? 2 : 1.4,
-        hovered ? 2 : 1.4
-      ),
-      0.1
-    );
+    animatePlanet(planet, delta, hovered, 2, 1.4);
   });
 
   return (

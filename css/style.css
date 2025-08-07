@@ -46,16 +46,12 @@ canvas {
 
 .overlay {
   position: absolute;
-  bottom: 1rem;
-  left: 4rem;
+  bottom: 3.5%;
+  left: 3.5%;
   display: flex;
   gap: 1.5rem;
   z-index: 1000;
   pointer-events: auto;
-}
-
-.overlay a {
-  cursor: pointer;
 }
 
 @media (max-width: 768px) {
@@ -83,8 +79,65 @@ canvas {
   pointer-events: auto;
 }
 
-@media (max-width: 768px) {
-  canvas {
-    cursor: auto;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.overlay a {
+  animation: fadeIn 1s ease-out forwards;
+  opacity: 0;
+}
+
+.overlay a:nth-child(1) {
+  animation-delay: 0.5s;
+}
+
+.overlay a:nth-child(2) {
+  animation-delay: 0.7s;
+}
+
+.swipe {
+  position: fixed;
+  bottom: 10%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  animation: swipeIn 2s ease-out forwards;
+}
+
+.swipe.hidden {
+  animation: swipeOut 0.8s ease-in forwards;
+}
+
+@keyframes swipeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes swipeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
   }
 }

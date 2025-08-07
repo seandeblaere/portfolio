@@ -6,17 +6,21 @@ import {
   Text,
 } from "@react-three/drei";
 import { useFrame, useThree, createPortal, extend } from "@react-three/fiber";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import * as THREE from "three";
 import { v4 as uuidv4 } from "uuid";
 import { easing } from "maath";
 import { SpaceScene } from "../space/Space.jsx";
-import { useMobileContext } from "../../context/MobileContext.jsx";
-
+import { useSceneContext } from "../../context/SceneContext.jsx";
 import BicubicUpscaleMaterial from "../clouds/BicubicUpscaleMaterial";
-import getFullscreenTriangle from "../../utils.jsx";
+import {
+  getFullscreenTriangle,
+  updateShaderUniforms,
+  calculateCameraPosition,
+} from "../../utils.jsx";
 import vertexShader from "../clouds/vertexShader.glsl";
 import fragmentShader from "../clouds/fragmentShader.glsl";
+import { useScrollControl } from "../../hooks/useScrollControl";
 
 extend({ BicubicUpscaleMaterial });
 
@@ -24,27 +28,32 @@ const BLUE_NOISE_TEXTURE_URL = "../assets/blue-noise.png";
 const NOISE_TEXTURE_URL = "../assets/noise2.png";
 
 export function Raymarching({ DPR, setDPR }) {
-  const { isMobile } = useMobileContext();
+  const { isMobile } = useSceneContext();
   const [enableEffects, setEnableEffects] = useState(false);
   const [position, setPosition] = useState(false);
-  const mesh = useRef();
-  const opacity = useRef(1);
-  const textRef = useRef();
-  const screenMesh = useRef();
-  const screenCamera = useRef();
-  const upscalerMaterialRef = useRef();
   const { viewport } = useThree();
-  const portalMaterial = useRef();
-  const portalMesh = useRef();
-  const lastDpr = useRef(DPR);
 
-  const virtualScroll = useRef(0);
-  const currentScroll = useRef(0);
-  const isVisible = useRef(true);
-  const magicScene = new THREE.Scene();
+  const { virtualScroll, currentScroll } = useScrollControl();
 
+  const refs = {
+    mesh: useRef(),
+    text: useRef(),
+    screen: {
+      mesh: useRef(),
+      camera: useRef(),
+    },
+    portal: {
+      material: useRef(),
+      mesh: useRef(),
+    },
+    upscaler: useRef(),
+    lastDpr: useRef(DPR),
+    opacity: useRef(1),
+    isVisible: useRef(true),
+  };
+
+  const magicScene = useMemo(() => new THREE.Scene(), []);
   const resolution = isMobile ? 3 : 5;
-
   const renderTargetA = useFBO(
     window.innerWidth / resolution,
     window.innerHeight / resolution
@@ -54,94 +63,44 @@ export function Raymarching({ DPR, setDPR }) {
   const textContent = isMobile
     ? "Scroll down\nto enter my universe"
     : "Scroll down to enter my universe";
-
-  const fontProps = {
-    font: "./Orbitron-Regular.ttf",
-    fontSize: isMobile ? 0.6 * scalingFactor : 0.45 * scalingFactor,
-    "material-toneMapped": false,
-  };
+  const fontProps = useMemo(
+    () => ({
+      font: "./Orbitron-Regular.ttf",
+      fontSize: isMobile ? 0.6 * scalingFactor : 0.45 * scalingFactor,
+      "material-toneMapped": false,
+    }),
+    [isMobile, scalingFactor]
+  );
 
   const blueNoiseTexture = useTexture(BLUE_NOISE_TEXTURE_URL);
-  blueNoiseTexture.wrapS = THREE.RepeatWrapping;
-  blueNoiseTexture.wrapT = THREE.RepeatWrapping;
-  blueNoiseTexture.minFilter = THREE.NearestMipmapLinearFilter;
-  blueNoiseTexture.magFilter = THREE.NearestMipmapLinearFilter;
-
   const noisetexture = useTexture(NOISE_TEXTURE_URL);
-  noisetexture.wrapS = THREE.RepeatWrapping;
-  noisetexture.wrapT = THREE.RepeatWrapping;
-  noisetexture.minFilter = THREE.NearestMipmapLinearFilter;
-  noisetexture.magFilter = THREE.NearestMipmapLinearFilter;
 
-  const uniforms = {
-    uTime: new THREE.Uniform(0.0),
-    uResolution: new THREE.Uniform(new THREE.Vector2()),
-    uNoise: new THREE.Uniform(null),
-    uBlueNoise: new THREE.Uniform(null),
-    uFrame: new THREE.Uniform(0),
-    uCameraPosition: new THREE.Uniform(new THREE.Vector3(0.0, 0.5, 5.5)),
-    uCurrentScroll: new THREE.Uniform(0),
-  };
-
-  useEffect(() => {
-    const preventPullToRefresh = (e) => {
-      e.preventDefault();
+  useMemo(() => {
+    const configureTexture = (texture) => {
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+      texture.minFilter = texture.magFilter = THREE.NearestMipmapLinearFilter;
     };
 
-    document.body.addEventListener("touchstart", preventPullToRefresh, {
-      passive: false,
-    });
-    document.body.addEventListener("touchmove", preventPullToRefresh, {
-      passive: false,
-    });
+    configureTexture(blueNoiseTexture);
+    configureTexture(noisetexture);
+  }, [blueNoiseTexture, noisetexture]);
 
-    return () => {
-      document.body.removeEventListener("touchstart", preventPullToRefresh);
-      document.body.removeEventListener("touchmove", preventPullToRefresh);
-    };
-  }, []);
-
-  useEffect(() => {
-    let touchStartY = 0;
-
-    const onWheel = (event) => {
-      virtualScroll.current += event.deltaY * 0.001;
-      virtualScroll.current = Math.max(0, Math.min(1, virtualScroll.current));
-    };
-
-    const onTouchStart = (event) => {
-      touchStartY = event.touches[0].clientY;
-    };
-
-    const onTouchMove = (event) => {
-      event.preventDefault();
-
-      const touchEndY = event.touches[0].clientY;
-      const deltaY = touchStartY - touchEndY;
-
-      virtualScroll.current += deltaY * 0.002;
-      virtualScroll.current = Math.max(0, Math.min(1, virtualScroll.current));
-
-      touchStartY = touchEndY;
-    };
-
-    const disableScroll = (event) => event.preventDefault();
-
-    window.addEventListener("wheel", onWheel);
-    window.addEventListener("wheel", disableScroll, { passive: false });
-    window.addEventListener("touchstart", onTouchStart, { passive: false });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-
-    return () => {
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("wheel", disableScroll);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-    };
-  }, []);
+  const uniforms = useMemo(
+    () => ({
+      uTime: new THREE.Uniform(0.0),
+      uResolution: new THREE.Uniform(new THREE.Vector2()),
+      uNoise: new THREE.Uniform(null),
+      uBlueNoise: new THREE.Uniform(null),
+      uFrame: new THREE.Uniform(0),
+      uCameraPosition: new THREE.Uniform(new THREE.Vector3(0.0, 0.5, 5.5)),
+      uCurrentScroll: new THREE.Uniform(0),
+    }),
+    []
+  );
 
   useFrame((state, delta) => {
     const { gl, clock } = state;
+    const { opacity, isVisible } = refs;
 
     currentScroll.current = THREE.MathUtils.damp(
       currentScroll.current,
@@ -150,33 +109,15 @@ export function Raymarching({ DPR, setDPR }) {
       delta
     );
 
-    const startY = -6;
-    const endY = isMobile ? 0 : -0.2;
-    const startZ = isMobile ? 6.2 : 5.3;
-    const endZ = -2.5;
-    const startOpacity = 1;
-    const endOpacity = 0;
+    const {
+      yPosition,
+      zPosition,
+      opacity: newOpacity,
+    } = calculateCameraPosition(currentScroll.current, isMobile);
 
-    let yPosition = startY;
-    let zPosition = startZ;
+    opacity.current = newOpacity;
 
-    if (currentScroll.current < 0.5) {
-      const t = currentScroll.current * 2;
-      yPosition = THREE.MathUtils.lerp(startY, endY, t);
-      opacity.current = THREE.MathUtils.lerp(startOpacity, endOpacity, t);
-    } else {
-      const t = (currentScroll.current - 0.5) * 2;
-      yPosition = endY;
-      opacity.current = endOpacity;
-
-      zPosition = THREE.MathUtils.lerp(startZ, endZ, t);
-    }
-
-    if (currentScroll.current > 0.94) {
-      setEnableEffects(true);
-    } else {
-      setEnableEffects(false);
-    }
+    setEnableEffects(currentScroll.current > 0.94);
 
     if (currentScroll.current > 0.75) {
       setPosition(true);
@@ -186,55 +127,60 @@ export function Raymarching({ DPR, setDPR }) {
       setDPR(1);
     }
 
-    if (currentScroll.current > 0.85) {
-      isVisible.current = false;
-    } else {
-      isVisible.current = true;
+    isVisible.current = currentScroll.current <= 0.85;
+
+    if (refs.text.current?.material) {
+      refs.text.current.material.opacity = opacity.current;
+      refs.text.current.material.needsUpdate = true;
     }
 
-    if (textRef.current && textRef.current.material) {
-      textRef.current.material.opacity = opacity.current;
-      textRef.current.material.needsUpdate = true;
+    const shaderMaterial = refs.mesh.current?.material;
+    if (shaderMaterial) {
+      updateShaderUniforms(shaderMaterial, {
+        elapsedTime: clock.getElapsedTime(),
+        resolution: new THREE.Vector2(
+          renderTargetA.width,
+          renderTargetA.height
+        ),
+        blueNoiseTexture,
+        noiseTexture: noisetexture,
+        cameraPosition: new THREE.Vector3(0, yPosition, zPosition),
+        currentScroll: currentScroll.current,
+      });
     }
 
-    mesh.current.material.uniforms.uTime.value = clock.getElapsedTime();
-    mesh.current.material.uniforms.uResolution.value = new THREE.Vector2(
-      renderTargetA.width,
-      renderTargetA.height
-    );
-    mesh.current.material.uniforms.uBlueNoise.value = blueNoiseTexture;
-    mesh.current.material.uniforms.uNoise.value = noisetexture;
-    mesh.current.material.uniforms.uFrame.value += 1;
-    mesh.current.material.uniforms.uCameraPosition.value = new THREE.Vector3(
-      0.0,
-      yPosition,
-      zPosition
-    );
-    mesh.current.material.uniforms.uCurrentScroll.value = currentScroll.current;
     gl.setRenderTarget(renderTargetA);
     gl.render(magicScene, state.camera);
 
-    upscalerMaterialRef.current.uniforms.uTexture.value = renderTargetA.texture;
-    screenMesh.current.material = upscalerMaterialRef.current;
+    if (refs.upscaler.current) {
+      refs.upscaler.current.uniforms.uTexture.value = renderTargetA.texture;
+
+      if (refs.screen.mesh.current) {
+        refs.screen.mesh.current.material = refs.upscaler.current;
+      }
+    }
 
     gl.setRenderTarget(null);
 
-    const blendStart = 0.75;
-    const blendEnd = 0.95;
-
     const blendFactor = THREE.MathUtils.clamp(
-      (currentScroll.current - blendStart) / (blendEnd - blendStart),
+      (currentScroll.current - 0.75) / 0.2,
       0,
       1
     );
 
-    if (portalMaterial.current) {
-      easing.damp(portalMaterial.current, "blend", blendFactor, 0.01, delta);
+    if (refs.portal.material.current) {
+      easing.damp(
+        refs.portal.material.current,
+        "blend",
+        blendFactor,
+        0.01,
+        delta
+      );
     }
 
-    if (DPR !== lastDpr.current && upscalerMaterialRef.current) {
-      upscalerMaterialRef.current.updateDPR(DPR);
-      lastDpr.current = DPR;
+    if (DPR !== refs.lastDpr.current && refs.upscaler.current) {
+      refs.upscaler.current.updateDPR(DPR);
+      refs.lastDpr.current = DPR;
     }
   });
 
@@ -242,9 +188,9 @@ export function Raymarching({ DPR, setDPR }) {
     <>
       {createPortal(
         <mesh
-          ref={mesh}
+          ref={refs.mesh}
           scale={[viewport.width, viewport.height, 1]}
-          visible={isVisible.current}
+          visible={refs.isVisible.current}
         >
           <planeGeometry args={[1, 1]} />
           <shaderMaterial
@@ -252,45 +198,44 @@ export function Raymarching({ DPR, setDPR }) {
             fragmentShader={fragmentShader}
             vertexShader={vertexShader}
             uniforms={uniforms}
-            wireframe={false}
             transparent
             depthWrite={false}
           />
         </mesh>,
         magicScene
       )}
+
       <OrthographicCamera
-        ref={screenCamera}
+        ref={refs.screen.camera}
         args={[-1, 1, 1, -1, 0, 1]}
-        visible={isVisible.current}
+        visible={refs.isVisible.current}
       />
+
       <bicubicUpscaleMaterial
-        ref={upscalerMaterialRef}
+        ref={refs.upscaler}
         key={uuidv4()}
-        visible={isVisible.current}
+        visible={refs.isVisible.current}
         args={[DPR]}
       />
+
       <mesh
-        ref={screenMesh}
+        ref={refs.screen.mesh}
         geometry={getFullscreenTriangle()}
         frustumCulled={false}
-        visible={isVisible.current}
-        onPointerOver={() => set(true)}
-        onPointerOut={() => set(false)}
+        visible={refs.isVisible.current}
       >
         <meshBasicMaterial />
       </mesh>
 
-      <mesh ref={portalMesh}>
+      <mesh ref={refs.portal.mesh}>
         <planeGeometry args={[1, 1]} />
-
-        <MeshPortalMaterial ref={portalMaterial} visible={false}>
+        <MeshPortalMaterial ref={refs.portal.material} visible={false}>
           <SpaceScene enableEffects={enableEffects} position={position} />
         </MeshPortalMaterial>
       </mesh>
 
       <Text
-        ref={textRef}
+        ref={refs.text}
         {...fontProps}
         position={[0, 0, 0]}
         color="#434183"

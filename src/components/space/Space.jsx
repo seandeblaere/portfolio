@@ -15,11 +15,11 @@ import contactData from "/info/contact.json";
 import skillsData from "/info/skills.json";
 import { Pointer } from "./Pointer";
 import { Planet } from "./Planet";
-import { useMobileContext } from "../../context/MobileContext.jsx";
+import { useSceneContext } from "../../context/SceneContext.jsx";
+import { setPosition } from "../../utils.jsx";
 
-export const SpaceScene = ({ enableEffects, position }) => {
-  const { isMobile, activePlanetIndex, setShowMobileControls } =
-    useMobileContext();
+export const SpaceScene = ({ enableEffects }) => {
+  const { isMobile, isSpaceScene, setIsSpaceScene } = useSceneContext();
 
   const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
   const COUNT = (isMobile ? 700 : 1000) * scalingFactor;
@@ -42,8 +42,17 @@ export const SpaceScene = ({ enableEffects, position }) => {
   const velocityRef = useRef(0.12);
   const hasVelocityReachedMax = useRef(false);
 
-  const isVisibleRef = useRef(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const activatedRef = useRef(false);
+
+  const [activePlanetIndex, setActivePlanetIndex] = useState(0);
+
+  const nextPlanet = () => {
+    setActivePlanetIndex((prev) => (prev + 1) % 4);
+  };
+
+  const previousPlanet = () => {
+    setActivePlanetIndex((prev) => (prev - 1 + 4) % 4);
+  };
 
   const getTargetPosition = (planetIndex) => {
     return planetMobileTargetPositions[
@@ -52,18 +61,8 @@ export const SpaceScene = ({ enableEffects, position }) => {
   };
 
   useEffect(() => {
-    if (!meshRef.current || !position) return;
-
-    const t = new THREE.Object3D();
-    let j = 0;
-    for (let i = 0; i < COUNT * 3; i += 3) {
-      t.position.x = generatePos(XY_BOUNDS);
-      t.position.y = generatePos(XY_BOUNDS);
-      t.position.z = (Math.random() - 0.5) * Z_BOUNDS;
-      t.updateMatrix();
-      meshRef.current.setMatrixAt(j++, t.matrix);
-    }
-  }, [position]);
+    setPosition(meshRef, COUNT, XY_BOUNDS, Z_BOUNDS);
+  }, []);
 
   const temp = new THREE.Matrix4();
   const tempPos = new THREE.Vector3();
@@ -85,9 +84,9 @@ export const SpaceScene = ({ enableEffects, position }) => {
       }
 
       if (velocityRef.current <= 0.1 && hasVelocityReachedMax.current) {
-        isVisibleRef.current = true;
+        activatedRef.current = true;
       } else {
-        isVisibleRef.current = false;
+        activatedRef.current = false;
       }
 
       if (hasVelocityReachedMax.current && velocityRef.current > 0.01) {
@@ -96,7 +95,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
     } else {
       velocityRef.current = 0.12;
       hasVelocityReachedMax.current = false;
-      isVisibleRef.current = false;
+      activatedRef.current = false;
     }
 
     const velocity = velocityRef.current;
@@ -143,11 +142,39 @@ export const SpaceScene = ({ enableEffects, position }) => {
       effectsRef.current.offset.y = chromaticOffset;
     }
 
-    if (isVisibleRef.current !== isVisible) {
-      setIsVisible(isVisibleRef.current);
-      setShowMobileControls(isVisibleRef.current && isMobile);
+    if (activatedRef.current !== isSpaceScene) {
+      setIsSpaceScene(activatedRef.current);
     }
   });
+
+  useEffect(() => {
+    if (!isMobile) return;
+
+    setTimeout(() => {
+      let touchStartX = 0;
+      const handleTouchStart = (e) => {
+        touchStartX = e.touches[0].clientX;
+      };
+
+      const handleTouchEnd = (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const diff = touchEndX - touchStartX;
+
+        if (diff > 50) previousPlanet();
+        else if (diff < -50) nextPlanet();
+      };
+
+      document.addEventListener("touchstart", handleTouchStart, {
+        passive: true,
+      });
+      document.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+      return () => {
+        document.removeEventListener("touchstart", handleTouchStart);
+        document.removeEventListener("touchend", handleTouchEnd);
+      };
+    }, 1000);
+  }, [isMobile, nextPlanet, previousPlanet]);
 
   return (
     <>
@@ -186,7 +213,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
       />
 
       <Physics gravity={[0, 0, 0]}>
-        <Pointer visible={isVisible} />
+        <Pointer visible={isSpaceScene} />
         <Planet
           startingPosition={[-20, 20, 20]}
           targetPosition={
@@ -198,7 +225,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
             title: aboutMeData.name,
             content: aboutMeData.description,
           }}
-          activated={isVisible}
+          activated={isSpaceScene}
         >
           <Planet1 />
         </Planet>
@@ -213,7 +240,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
             title: interestsData.name,
             content: interestsData.description,
           }}
-          activated={isVisible}
+          activated={isSpaceScene}
         >
           <Planet2 />
         </Planet>
@@ -229,7 +256,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
             content: skillsData.description,
             list: skillsData.skills,
           }}
-          activated={isVisible}
+          activated={isSpaceScene}
         >
           <Planet3 />
         </Planet>
@@ -244,7 +271,7 @@ export const SpaceScene = ({ enableEffects, position }) => {
             title: contactData.name,
             content: contactData.description,
           }}
-          activated={isVisible}
+          activated={isSpaceScene}
         >
           <Planet4 />
         </Planet>
@@ -252,7 +279,3 @@ export const SpaceScene = ({ enableEffects, position }) => {
     </>
   );
 };
-
-function generatePos(XY_BOUNDS) {
-  return (Math.random() - 0.5) * XY_BOUNDS;
-}

@@ -1,64 +1,52 @@
-import {
-  Bvh,
-  Loader,
-  AdaptiveEvents,
-  AdaptiveDpr,
-  PerformanceMonitor,
-  Html,
-} from "@react-three/drei";
+import { Loader } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { Raymarching } from "./components/raymarching/Raymarching";
-import { MobileProvider } from "./context/MobileContext";
-import { MobileControls } from "./components/controls/MobileControls";
-import { Perf } from "r3f-perf";
+import { Socials } from "./components/overlays/Socials";
+import { SceneProvider, useSceneContext } from "./context/SceneContext";
+import { Performance } from "./components/performance/Performance";
+import { preventPullToRefresh } from "./utils.jsx";
+import { Swipe } from "./components/overlays/Swipe";
 
-const Scene = () => {
+const SceneContent = () => {
   const [DPR, setDPR] = useState(1);
   const [factor, setFactor] = useState(1);
+  const { remountKey } = useSceneContext();
+
+  useEffect(() => {
+    preventPullToRefresh();
+  }, []);
 
   return (
-    <MobileProvider>
+    <>
       <Canvas
+        key={remountKey}
         camera={{ position: [0, 0, 6], near: 0.1, far: 100 }}
         dpr={DPR}
         gl={{ antialias: true }}
       >
-        {/* <AdaptiveEvents /> */}
-        <AdaptiveDpr pixelated />
-        {/* <Perf position="top-left" /> */}
-        <PerformanceMonitor
+        <Performance
+          DPR={DPR}
+          setDPR={setDPR}
           factor={factor}
-          bounds={(refreshrate) => (refreshrate > 90 ? [45, 80] : [45, 55])}
-          onIncline={() => {
-            setDPR(Math.min(DPR + 0.3, 2));
-          }}
-          onDecline={() => {
-            setDPR(Math.max(DPR - 0.3, 0.5));
-          }}
-          onChange={({ factor }) => {
-            setFactor(factor);
-            setDPR(Math.floor(0.5 + 1.5 * factor));
-          }}
-          flipflops={2}
-          onFallback={() => setDPR(0.5)}
+          setFactor={setFactor}
         />
-        <Bvh />
         <Suspense fallback={null}>
           <Raymarching DPR={DPR} setDPR={setDPR} />
         </Suspense>
       </Canvas>
       <Loader />
-      <MobileControls />
-      <div className="overlay">
-        <a href="https://github.com/seandeblaere" target="_blank">
-          <img src="/github.svg" alt="GitHub" width={32} height={32} />
-        </a>
-        <a href="mailto:seandebl@student.arteveldehs.be">
-          <img src="/email.svg" alt="Email" width={32} height={32} />
-        </a>
-      </div>
-    </MobileProvider>
+      <Socials />
+      <Swipe />
+    </>
+  );
+};
+
+const Scene = () => {
+  return (
+    <SceneProvider>
+      <SceneContent />
+    </SceneProvider>
   );
 };
 
