@@ -40,30 +40,21 @@ export const SpaceScene = ({ enableEffects }) => {
   const activatedRef = useRef(false);
   const [activePlanetIndex, setActivePlanetIndex] = useState(0);
 
-  useEffect(() => {
-    console.log("Planet index updated to:", activePlanetIndex);
-  }, [activePlanetIndex]);
-
   const nextPlanet = () => {
     const newIndex = (activePlanetIndex + 1) % 4;
-    console.log("planet index will change to:", newIndex);
     setActivePlanetIndex(newIndex);
   };
 
   const previousPlanet = () => {
     const newIndex = (activePlanetIndex - 1 + 4) % 4;
-    console.log("planet index will change to:", newIndex);
     setActivePlanetIndex(newIndex);
   };
 
-  const getTargetPosition = useCallback(
-    (planetIndex) => {
-      return planetMobileTargetPositions[
-        (planetIndex + activePlanetIndex) % planetMobileTargetPositions.length
-      ];
-    },
-    [activePlanetIndex, planetMobileTargetPositions]
-  );
+  const getTargetPosition = (planetIndex) => {
+    return planetMobileTargetPositions[
+      (planetIndex + activePlanetIndex) % planetMobileTargetPositions.length
+    ];
+  };
 
   const constants = useMemo(() => {
     const scalingFactor = Math.min(
@@ -217,7 +208,7 @@ export const SpaceScene = ({ enableEffects }) => {
       document.removeEventListener("touchend", handleTouchEnd);
       clearTimeout(swipeTimeout);
     };
-  }, [isMobile, isSpaceScene, nextPlanet, previousPlanet]);
+  }, [isMobile, isSpaceScene]);
 
   const planetData = useMemo(
     () => [
