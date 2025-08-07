@@ -5,7 +5,7 @@ import {
   EffectComposer,
 } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Physics } from "@react-three/rapier";
 import * as THREE from "three";
 import { Planet1, Planet2, Planet3, Planet4 } from "../planets/Planets";
@@ -21,20 +21,15 @@ import { setPosition } from "../../utils.jsx";
 export const SpaceScene = ({ enableEffects }) => {
   const { isMobile, isSpaceScene, setIsSpaceScene } = useSceneContext();
 
-  const scalingFactor = Math.min(Math.max(window.innerWidth / 1600, 0.55), 1.2);
-  const COUNT = (isMobile ? 700 : 1000) * scalingFactor;
-  const XY_BOUNDS = 40 * scalingFactor;
-  const Z_BOUNDS = 20 * scalingFactor;
-  const MAX_SPEED_FACTOR = isMobile ? 0.95 : 1.3;
-  const MAX_SCALE_FACTOR = isMobile ? 32 : 35;
-  const CHROMATIC_ABBERATION_OFFSET = isMobile ? 0.02 : 0.007;
-
-  const planetMobileTargetPositions = [
-    [0, -0.5, 3],
-    [2, 1.5, -1.5],
-    [1, 4, -2],
-    [-1.5, 2, 0.5],
-  ];
+  const planetMobileTargetPositions = useMemo(
+    () => [
+      [0, -0.5, 3],
+      [2, 1.5, -1.5],
+      [1, 4, -2],
+      [-1.5, 2, 0.5],
+    ],
+    []
+  );
 
   const meshRef = useRef();
   const effectsRef = useRef();
@@ -43,25 +38,50 @@ export const SpaceScene = ({ enableEffects }) => {
   const hasVelocityReachedMax = useRef(false);
 
   const activatedRef = useRef(false);
-
   const [activePlanetIndex, setActivePlanetIndex] = useState(0);
 
-  const nextPlanet = () => {
+  const nextPlanet = useCallback(() => {
     setActivePlanetIndex((prev) => (prev + 1) % 4);
-  };
+    console.log("planet index", activePlanetIndex);
+  }, []);
 
-  const previousPlanet = () => {
+  const previousPlanet = useCallback(() => {
     setActivePlanetIndex((prev) => (prev - 1 + 4) % 4);
-  };
+    console.log("planet index", activePlanetIndex);
+  }, []);
 
-  const getTargetPosition = (planetIndex) => {
-    return planetMobileTargetPositions[
-      (planetIndex + activePlanetIndex) % planetMobileTargetPositions.length
-    ];
-  };
+  const getTargetPosition = useCallback(
+    (planetIndex) => {
+      return planetMobileTargetPositions[
+        (planetIndex + activePlanetIndex) % planetMobileTargetPositions.length
+      ];
+    },
+    [activePlanetIndex, planetMobileTargetPositions]
+  );
+
+  const constants = useMemo(() => {
+    const scalingFactor = Math.min(
+      Math.max(window.innerWidth / 1600, 0.55),
+      1.2
+    );
+    return {
+      scalingFactor,
+      count: (isMobile ? 700 : 1000) * scalingFactor,
+      xyBounds: 40 * scalingFactor,
+      zBounds: 20 * scalingFactor,
+      maxSpeedFactor: isMobile ? 0.95 : 1.3,
+      maxScaleFactor: isMobile ? 32 : 35,
+      chromaticAberrationOffset: isMobile ? 0.02 : 0.007,
+    };
+  }, [isMobile]);
 
   useEffect(() => {
-    setPosition(meshRef, COUNT, XY_BOUNDS, Z_BOUNDS);
+    setPosition(
+      meshRef,
+      constants.count,
+      constants.xyBounds,
+      constants.zBounds
+    );
   }, []);
 
   const temp = new THREE.Matrix4();
@@ -100,20 +120,20 @@ export const SpaceScene = ({ enableEffects }) => {
 
     const velocity = velocityRef.current;
 
-    for (let i = 0; i < COUNT; i++) {
+    for (let i = 0; i < constants.count; i++) {
       meshRef.current.getMatrixAt(i, temp);
 
       tempObject.scale.set(
         1,
         1,
-        Math.max(1, velocity * MAX_SCALE_FACTOR * enableEffects)
+        Math.max(1, velocity * constants.maxScaleFactor * enableEffects)
       );
 
       tempPos.setFromMatrixPosition(temp);
-      if (tempPos.z > Z_BOUNDS / 2) {
-        tempPos.z = -Z_BOUNDS / 2;
+      if (tempPos.z > constants.zBounds / 2) {
+        tempPos.z = -constants.zBounds / 2;
       } else {
-        tempPos.z += Math.max(delta, velocity * MAX_SPEED_FACTOR);
+        tempPos.z += Math.max(delta, velocity * constants.maxSpeedFactor);
       }
       tempObject.position.set(tempPos.x, tempPos.y, tempPos.z);
 
@@ -126,7 +146,7 @@ export const SpaceScene = ({ enableEffects }) => {
         tempColor.r =
           tempColor.g =
           tempColor.b =
-            1 - tempPos.z / (-Z_BOUNDS / 2);
+            1 - tempPos.z / (-constants.zBounds / 2);
       }
       meshRef.current.setColorAt(i, tempColor);
     }
@@ -135,7 +155,8 @@ export const SpaceScene = ({ enableEffects }) => {
       meshRef.current.instanceColor.needsUpdate = true;
 
     const normalizedVelocity = (velocity - 0.1) / (2 - 0.1);
-    const chromaticOffset = normalizedVelocity * CHROMATIC_ABBERATION_OFFSET;
+    const chromaticOffset =
+      normalizedVelocity * constants.chromaticAberrationOffset;
 
     if (effectsRef.current) {
       effectsRef.current.offset.x = chromaticOffset;
@@ -148,7 +169,7 @@ export const SpaceScene = ({ enableEffects }) => {
   });
 
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isMobile || !isSpaceScene) return;
 
     setTimeout(() => {
       let touchStartX = 0;
@@ -174,16 +195,66 @@ export const SpaceScene = ({ enableEffects }) => {
         document.removeEventListener("touchend", handleTouchEnd);
       };
     }, 1000);
-  }, [isMobile, nextPlanet, previousPlanet]);
+  }, [isMobile]);
+
+  const planetData = useMemo(
+    () => [
+      {
+        startingPosition: [-20, 20, 20],
+        desktopPosition: [
+          5.5 * constants.scalingFactor,
+          2.3 * constants.scalingFactor,
+          -0.6 * constants.scalingFactor,
+        ],
+        data: { title: aboutMeData.name, content: aboutMeData.description },
+        component: Planet1,
+      },
+      {
+        startingPosition: [20, -20, -10],
+        desktopPosition: [
+          -5 * constants.scalingFactor,
+          1.2 * constants.scalingFactor,
+          -0.7 * constants.scalingFactor,
+        ],
+        data: { title: interestsData.name, content: interestsData.description },
+        component: Planet2,
+      },
+      {
+        startingPosition: [20, 20, 20],
+        desktopPosition: [
+          1 * constants.scalingFactor,
+          0,
+          -0.6 * constants.scalingFactor,
+        ],
+        data: {
+          title: skillsData.name,
+          content: skillsData.description,
+          list: skillsData.skills,
+        },
+        component: Planet3,
+      },
+      {
+        startingPosition: [-20, -20, -5],
+        desktopPosition: [
+          -2,
+          -3.2 * constants.scalingFactor,
+          -1.1 * constants.scalingFactor,
+        ],
+        data: { title: contactData.name, content: contactData.description },
+        component: Planet4,
+      },
+    ],
+    [constants.scalingFactor]
+  );
 
   return (
     <>
       <color args={["#000000"]} attach="background" />
       <instancedMesh
         ref={meshRef}
-        args={[undefined, undefined, COUNT]}
+        args={[undefined, undefined, constants.count]}
         matrixAutoUpdate
-        scale={scalingFactor}
+        scale={constants.scalingFactor}
       >
         <sphereGeometry args={[0.03, 4, 4]} />
         <meshBasicMaterial color={[1.5, 1.5, 1.5]} toneMapped={false} />
@@ -196,8 +267,8 @@ export const SpaceScene = ({ enableEffects }) => {
             blendFunction={BlendFunction.NORMAL}
             offset={
               new THREE.Vector2(
-                CHROMATIC_ABBERATION_OFFSET,
-                CHROMATIC_ABBERATION_OFFSET
+                constants.chromaticAberrationOffset,
+                constants.chromaticAberrationOffset
               )
             }
           />
@@ -214,67 +285,23 @@ export const SpaceScene = ({ enableEffects }) => {
 
       <Physics gravity={[0, 0, 0]}>
         <Pointer visible={isSpaceScene} />
-        <Planet
-          startingPosition={[-20, 20, 20]}
-          targetPosition={
-            isMobile
-              ? getTargetPosition(0)
-              : [5.5 * scalingFactor, 2.3 * scalingFactor, -0.6 * scalingFactor]
-          }
-          data={{
-            title: aboutMeData.name,
-            content: aboutMeData.description,
-          }}
-          activated={isSpaceScene}
-        >
-          <Planet1 />
-        </Planet>
-        <Planet
-          startingPosition={[20, -20, -10]}
-          targetPosition={
-            isMobile
-              ? getTargetPosition(1)
-              : [-5 * scalingFactor, 1.2 * scalingFactor, -0.7 * scalingFactor]
-          }
-          data={{
-            title: interestsData.name,
-            content: interestsData.description,
-          }}
-          activated={isSpaceScene}
-        >
-          <Planet2 />
-        </Planet>
-        <Planet
-          startingPosition={[20, 20, 20]}
-          targetPosition={
-            isMobile
-              ? getTargetPosition(2)
-              : [1 * scalingFactor, 0 * scalingFactor, -0.6 * scalingFactor]
-          }
-          data={{
-            title: skillsData.name,
-            content: skillsData.description,
-            list: skillsData.skills,
-          }}
-          activated={isSpaceScene}
-        >
-          <Planet3 />
-        </Planet>
-        <Planet
-          startingPosition={[-20, -20, -5]}
-          targetPosition={
-            isMobile
-              ? getTargetPosition(3)
-              : [-2, -3.2 * scalingFactor, -1.1 * scalingFactor]
-          }
-          data={{
-            title: contactData.name,
-            content: contactData.description,
-          }}
-          activated={isSpaceScene}
-        >
-          <Planet4 />
-        </Planet>
+
+        {planetData.map((planet, index) => {
+          const PlanetComponent = planet.component;
+          return (
+            <Planet
+              key={`planet-${index}`}
+              startingPosition={planet.startingPosition}
+              targetPosition={
+                isMobile ? getTargetPosition(index) : planet.desktopPosition
+              }
+              data={planet.data}
+              activated={isSpaceScene}
+            >
+              <PlanetComponent />
+            </Planet>
+          );
+        })}
       </Physics>
     </>
   );
