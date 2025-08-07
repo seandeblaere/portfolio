@@ -40,15 +40,21 @@ export const SpaceScene = ({ enableEffects }) => {
   const activatedRef = useRef(false);
   const [activePlanetIndex, setActivePlanetIndex] = useState(0);
 
-  const nextPlanet = useCallback(() => {
-    setActivePlanetIndex((prev) => (prev + 1) % 4);
-    console.log("planet index", activePlanetIndex);
-  }, []);
+  useEffect(() => {
+    console.log("Planet index updated to:", activePlanetIndex);
+  }, [activePlanetIndex]);
 
-  const previousPlanet = useCallback(() => {
-    setActivePlanetIndex((prev) => (prev - 1 + 4) % 4);
-    console.log("planet index", activePlanetIndex);
-  }, []);
+  const nextPlanet = () => {
+    const newIndex = (activePlanetIndex + 1) % 4;
+    console.log("planet index will change to:", newIndex);
+    setActivePlanetIndex(newIndex);
+  };
+
+  const previousPlanet = () => {
+    const newIndex = (activePlanetIndex - 1 + 4) % 4;
+    console.log("planet index will change to:", newIndex);
+    setActivePlanetIndex(newIndex);
+  };
 
   const getTargetPosition = useCallback(
     (planetIndex) => {
@@ -171,31 +177,47 @@ export const SpaceScene = ({ enableEffects }) => {
   useEffect(() => {
     if (!isMobile || !isSpaceScene) return;
 
-    setTimeout(() => {
-      let touchStartX = 0;
-      const handleTouchStart = (e) => {
-        touchStartX = e.touches[0].clientX;
-      };
+    let touchStartX = 0;
+    let isSwiping = false;
+    let swipeTimeout = null;
 
-      const handleTouchEnd = (e) => {
-        const touchEndX = e.changedTouches[0].clientX;
-        const diff = touchEndX - touchStartX;
+    const handleTouchStart = (e) => {
+      touchStartX = e.touches[0].clientX;
+      isSwiping = false;
+    };
 
-        if (diff > 50) previousPlanet();
-        else if (diff < -50) nextPlanet();
-      };
+    const handleTouchEnd = (e) => {
+      if (isSwiping) return;
 
-      document.addEventListener("touchstart", handleTouchStart, {
-        passive: true,
-      });
-      document.addEventListener("touchend", handleTouchEnd, { passive: true });
+      const touchEndX = e.changedTouches[0].clientX;
+      const diff = touchEndX - touchStartX;
 
-      return () => {
-        document.removeEventListener("touchstart", handleTouchStart);
-        document.removeEventListener("touchend", handleTouchEnd);
-      };
-    }, 1000);
-  }, [isMobile]);
+      if (Math.abs(diff) < 100) return;
+
+      isSwiping = true;
+
+      if (diff > 0) {
+        previousPlanet();
+      } else {
+        nextPlanet();
+      }
+
+      swipeTimeout = setTimeout(() => {
+        isSwiping = false;
+      }, 1000);
+    };
+
+    document.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchend", handleTouchEnd);
+      clearTimeout(swipeTimeout);
+    };
+  }, [isMobile, isSpaceScene, nextPlanet, previousPlanet]);
 
   const planetData = useMemo(
     () => [
