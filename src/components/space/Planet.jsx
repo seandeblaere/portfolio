@@ -49,7 +49,7 @@ export function Planet({
           targetVec.z - planetPosition.z
         );
         api.current.applyImpulse(
-          vec.multiplyScalar((isMobile ? 0.2 : 0.5) * scalingFactor)
+          vec.multiplyScalar((isMobile ? 0.1 : 0.5) * scalingFactor)
         );
       } else if (resetPosition.current) {
         const startVec = new THREE.Vector3(
@@ -65,7 +65,7 @@ export function Planet({
         );
 
         api.current.applyImpulse(
-          vec.multiplyScalar((isMobile ? 0.15 : 0.6) * scalingFactor)
+          vec.multiplyScalar((isMobile ? 0.2 : 0.6) * scalingFactor)
         );
 
         if (vec.length() < 1) {
