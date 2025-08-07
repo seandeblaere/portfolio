@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { useRef } from "react";
 import { lerp } from "three/src/math/MathUtils.js";
 
 const getFullscreenTriangle = () => {

@@ -5,7 +5,7 @@ import {
   EffectComposer,
 } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Physics } from "@react-three/rapier";
 import * as THREE from "three";
 import { Planet1, Planet2, Planet3, Planet4 } from "../planets/Planets";
@@ -18,18 +18,17 @@ import { Planet } from "./Planet";
 import { useSceneContext } from "../../context/SceneContext.jsx";
 import { setPosition } from "../../utils.jsx";
 
+const modulo = (n, m) => ((n % m) + m) % m;
+
 export const SpaceScene = ({ enableEffects }) => {
   const { isMobile, isSpaceScene, setIsSpaceScene } = useSceneContext();
 
-  const planetMobileTargetPositions = useMemo(
-    () => [
-      [0, -0.5, 3],
-      [2, 1.5, -1.5],
-      [1, 4, -2],
-      [-1.5, 2, 0.5],
-    ],
-    []
-  );
+  const planetMobileTargetPositions = [
+    [0, -0.5, 3],
+    [2, 1.5, -1.5],
+    [1, 4, -2],
+    [-1.5, 2, 0.5],
+  ];
 
   const meshRef = useRef();
   const effectsRef = useRef();
@@ -39,16 +38,25 @@ export const SpaceScene = ({ enableEffects }) => {
 
   const activatedRef = useRef(false);
   const [activePlanetIndex, setActivePlanetIndex] = useState(0);
+  const lastSwipeTime = useRef(0);
 
-  const nextPlanet = () => {
-    const newIndex = (activePlanetIndex + 1) % 4;
-    setActivePlanetIndex(newIndex);
+  const rotatePlanets = (direction) => {
+    const now = Date.now();
+
+    if (now - lastSwipeTime.current < 300) {
+      return;
+    }
+
+    lastSwipeTime.current = now;
+
+    setActivePlanetIndex((current) => {
+      const newIndex = modulo(current + direction, 4);
+      return newIndex;
+    });
   };
 
-  const previousPlanet = () => {
-    const newIndex = (activePlanetIndex - 1 + 4) % 4;
-    setActivePlanetIndex(newIndex);
-  };
+  const nextPlanet = () => rotatePlanets(1);
+  const previousPlanet = () => rotatePlanets(-1);
 
   const getTargetPosition = (planetIndex) => {
     return planetMobileTargetPositions[
@@ -169,33 +177,26 @@ export const SpaceScene = ({ enableEffects }) => {
     if (!isMobile || !isSpaceScene) return;
 
     let touchStartX = 0;
-    let isSwiping = false;
-    let swipeTimeout = null;
+    let touchStartTime = 0;
 
     const handleTouchStart = (e) => {
       touchStartX = e.touches[0].clientX;
-      isSwiping = false;
+      touchStartTime = Date.now();
     };
 
     const handleTouchEnd = (e) => {
-      if (isSwiping) return;
-
       const touchEndX = e.changedTouches[0].clientX;
+      const touchEndTime = Date.now();
       const diff = touchEndX - touchStartX;
+      const timeDiff = touchEndTime - touchStartTime;
 
-      if (Math.abs(diff) < 100) return;
-
-      isSwiping = true;
-
-      if (diff > 0) {
-        previousPlanet();
-      } else {
-        nextPlanet();
+      if (Math.abs(diff) > 100 && timeDiff < 500) {
+        if (diff > 0) {
+          previousPlanet();
+        } else {
+          nextPlanet();
+        }
       }
-
-      swipeTimeout = setTimeout(() => {
-        isSwiping = false;
-      }, 1000);
     };
 
     document.addEventListener("touchstart", handleTouchStart, {
@@ -206,7 +207,6 @@ export const SpaceScene = ({ enableEffects }) => {
     return () => {
       document.removeEventListener("touchstart", handleTouchStart);
       document.removeEventListener("touchend", handleTouchEnd);
-      clearTimeout(swipeTimeout);
     };
   }, [isMobile, isSpaceScene]);
 

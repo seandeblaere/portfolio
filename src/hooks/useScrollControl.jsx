@@ -6,6 +6,7 @@ export const useScrollControl = () => {
 
   useEffect(() => {
     let touchStartY = 0;
+    let touchStartX = 0;
 
     const onWheel = (event) => {
       virtualScroll.current += event.deltaY * 0.001;
@@ -14,17 +15,24 @@ export const useScrollControl = () => {
 
     const onTouchStart = (event) => {
       touchStartY = event.touches[0].clientY;
+      touchStartX = event.touches[0].clientX;
     };
 
     const onTouchMove = (event) => {
       event.preventDefault();
       const touchEndY = event.touches[0].clientY;
-      const deltaY = touchStartY - touchEndY;
+      const touchEndX = event.touches[0].clientX;
 
-      virtualScroll.current += deltaY * 0.002;
-      virtualScroll.current = Math.max(0, Math.min(1, virtualScroll.current));
+      const deltaY = touchStartY - touchEndY;
+      const deltaX = touchStartX - touchEndX;
+
+      if (Math.abs(deltaX) < 40) {
+        virtualScroll.current += deltaY * 0.002;
+        virtualScroll.current = Math.max(0, Math.min(1, virtualScroll.current));
+      }
 
       touchStartY = touchEndY;
+      touchStartX = touchEndX;
     };
 
     const disableScroll = (event) => event.preventDefault();
